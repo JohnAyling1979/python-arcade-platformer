@@ -32,6 +32,8 @@ class GameView(arcade.Window):
         self.player_texture = None
         self.player_sprite = None
 
+        self.tile_map = None
+
         self.scene = None
 
         self.camera = None
@@ -44,7 +46,19 @@ class GameView(arcade.Window):
         self.jump_sound = arcade.load_sound(":resources:sounds/jump1.wav")
 
     def setup(self):
-        self.scene = arcade.Scene()
+        layer_options = {
+            "Platforms": {
+                "use_spatial_hash": True
+            }
+        }
+
+        self.tile_map = arcade.load_tilemap(
+            ":resources:tiled_maps/map.json",
+            scaling=TILE_SCALING,
+            layer_options=layer_options,
+        )
+
+        self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
         self.player_texture = arcade.load_texture(current_dir / 'assets' / 'Player-4.png')
         self.player_sprite = arcade.Sprite(self.player_texture)
@@ -52,31 +66,8 @@ class GameView(arcade.Window):
         self.player_sprite.center_y = 96
         self.scene.add_sprite("Player", self.player_sprite)
 
-        self.scene.add_sprite_list("Walls", use_spatial_hash=True)
-        self.scene.add_sprite_list("Coins", use_spatial_hash=True)
-
-        for x in range(0, 1250, 64):
-            wall = arcade.Sprite(":resources:images/tiles/grassMid.png", scale=TILE_SCALING)
-            wall.center_x = x
-            wall.center_y = 32
-            self.scene.add_sprite("Walls", wall)
-
-        coordinate_list = [[512, 96], [256, 96], [768, 96]]
-
-        for coordinate in coordinate_list:
-            wall = arcade.Sprite(
-                ":resources:images/tiles/boxCrate_double.png", scale=TILE_SCALING)
-            wall.position = coordinate
-            self.scene.add_sprite("Walls", wall)
-
-        for x in range(128, 1250, 256):
-            coin = arcade.Sprite(":resources:images/items/coinGold.png", scale=COIN_SCALING)
-            coin.center_x = x
-            coin.center_y = 96
-            self.scene.add_sprite("Coins", coin)
-
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            self.player_sprite, walls=self.scene["Walls"], gravity_constant=GRAVITY
+            self.player_sprite, walls=self.scene["Platforms"], gravity_constant=GRAVITY
         )
 
         self.camera = arcade.Camera2D()
